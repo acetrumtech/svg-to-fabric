@@ -1,5 +1,16 @@
 # @acetrumtech/svg-to-fabric
 
+[![npm](https://img.shields.io/npm/v/%40acetrumtech%2Fsvg-to-fabric?color=5b5bd6&label=npm)](https://www.npmjs.com/package/@acetrumtech/svg-to-fabric)
+[![gzipped](https://img.shields.io/bundlephobia/minzip/%40acetrumtech%2Fsvg-to-fabric?color=5b5bd6&label=gzipped)](https://bundlephobia.com/package/@acetrumtech/svg-to-fabric)
+[![types](https://img.shields.io/npm/types/%40acetrumtech%2Fsvg-to-fabric?color=5b5bd6)](https://www.npmjs.com/package/@acetrumtech/svg-to-fabric)
+[![license](https://img.shields.io/npm/l/%40acetrumtech%2Fsvg-to-fabric?color=5b5bd6)](./LICENSE)
+
+**[Live demo](https://acetrumtech.github.io/svg-to-fabric/)** ·
+**[npm](https://www.npmjs.com/package/@acetrumtech/svg-to-fabric)** ·
+[Installation](#installation) ·
+[Framework support](#framework-support) ·
+[API](#api-reference)
+
 Turn an SVG into editable, **named** Fabric.js layers.
 
 Fabric already ships an SVG parser, and it is a good one — it resolves the CSS
@@ -13,14 +24,73 @@ rebuilds the group hierarchy, names every layer the way its exporter meant it to
 be named, and hands you either a nested Fabric `Group` tree or a flat list that
 still knows where it came from.
 
+---
+
+## Installation
+
+Published on npm as
+**[`@acetrumtech/svg-to-fabric`](https://www.npmjs.com/package/@acetrumtech/svg-to-fabric)**.
+
 ```bash
 npm install @acetrumtech/svg-to-fabric fabric
 ```
+
+```bash
+pnpm add @acetrumtech/svg-to-fabric fabric
+```
+
+```bash
+yarn add @acetrumtech/svg-to-fabric fabric
+```
+
+```bash
+bun add @acetrumtech/svg-to-fabric fabric
+```
+
+`fabric` is a **peer dependency**, listed separately on purpose: this package
+uses *your* copy of Fabric rather than bundling its own. A second copy in the
+bundle would break `instanceof` against your classes, and the objects this
+package builds are meant to be yours.
+
+| Requirement | |
+|---|---|
+| `fabric` | `>=7 <8` |
+| Node | `>=20` (for tooling and `parseSvg`) |
+| Module format | ESM only |
+| Types | bundled — no `@types/…` package needed |
+
+## Framework support
+
+The package is framework-agnostic ESM with no framework imports at all, so it
+works anywhere that can run ESM against a DOM. `fabric` is loaded with a dynamic
+`import()`, which means importing this package during server rendering is safe —
+nothing browser-only is evaluated until you actually convert.
+
+| Environment | Support | What to know |
+|---|---|---|
+| **React** 18 / 19 | ✅ | Nothing special — call it from an event handler or effect |
+| **Vite** | ✅ | Nothing special |
+| **Next.js** (App or Pages Router) | ✅ | Mark the component that owns the canvas `'use client'`, or `dynamic(..., { ssr: false })`. `parseSvg` works in a server route |
+| **Remix / React Router** | ✅ | Convert in a client-side effect |
+| **Vue 3 / Nuxt** | ✅ | Nuxt: wrap the canvas in `<ClientOnly>` |
+| **Svelte / SvelteKit** | ✅ | SvelteKit: convert inside `onMount` |
+| **Angular** | ✅ | Convert outside SSR (`isPlatformBrowser`) |
+| **Astro** | ✅ | Use a client-hydrated island (`client:only`) |
+| **Plain JS** / `<script type="module">` | ✅ | See [Plain JavaScript](#plain-javascript) |
+| **Web Worker** | ⚠️ | `convertSvgToFabric` needs a DOM, so no worker mode |
+| **Node / SSR** | ⚠️ | `parseSvg` only; assign `globalThis.DOMParser` from jsdom |
+| **React Native** | ❌ | No DOM and no canvas for Fabric to draw on |
+
+The rule underneath the table: **anything with a DOM can convert; anything at
+all can `parseSvg`.** Every SSR caveat above is the same caveat — do the
+conversion in the browser.
 
 ---
 
 ## Contents
 
+- [Installation](#installation)
+- [Framework support](#framework-support)
 - [At a glance](#at-a-glance)
 - [Try it](#try-it)
 - [Getting started](#getting-started)
@@ -78,14 +148,20 @@ result.warnings;                     // what could not be represented, and why
 
 ## Try it
 
+### → [acetrumtech.github.io/svg-to-fabric](https://acetrumtech.github.io/svg-to-fabric/)
+
+Drop an SVG and you get the canvas, the layer tree, the warnings and the Fabric
+JSON side by side, with every option switchable live and the result reconverted
+as you change them. Nothing is uploaded — the conversion runs entirely in your
+browser, which is the same thing that makes the library work in the first place.
+
+Run it locally to hack on the library itself:
+
 ```bash
 npm install && npm run demo
 ```
 
-Drop an SVG and you get the canvas, the layer tree, the warnings and the Fabric
-JSON side by side, with every option switchable live and the result reconverted
-as you change them. The demo aliases the package to `src/`, so it hot-reloads on
-library edits.
+The demo aliases the package to `src/`, so it hot-reloads on library edits.
 
 Every push to `main` publishes it to GitHub Pages via
 `.github/workflows/deploy-demo.yml`, which typechecks and tests the library

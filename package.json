@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Turn SVG files into editable, named Fabric.js layers — SVG to Fabric.js JSON with the group hierarchy preserved.",
   "homepage": "https://acetrum.com",
+  "demo": "https://acetrumtech.github.io/svg-to-fabric/",
   "author": {
     "name": "avneesh",
     "email": "info.acetrum@gmail.com",
