@@ -26,7 +26,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22 is current LTS. package.json only requires >=20, but pinning the
+          # older line here just collects deprecation notices for no benefit.
+          node-version: 22
           cache: npm
 
       - run: npm ci
@@ -42,7 +44,15 @@ jobs:
           # https://<owner>.github.io/<repo>/
           DEMO_BASE: /svg-to-fabric/
 
+      # `enablement` turns Pages on for the repository if it is not already,
+      # instead of failing with "Get Pages site failed" and waiting for someone
+      # to click through Settings. Needs the `pages: write` permission above,
+      # and a repository Pages is available on — on the free plan that means a
+      # public one.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: demo/dist
