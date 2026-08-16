@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActiveSelection, Canvas, type FabricObject } from 'fabric';
 import {
   ACETRUM_PROP,
   convertSvgToFabric,
+  findNode,
   flattenTree,
   loadIntoFabric,
   type ConversionResult,
@@ -10,9 +11,9 @@ import {
   type SvgNode,
 } from '@acetrumtech/svg-to-fabric';
 import { LayerTree } from './LayerTree.js';
+import { Icon } from './icons.js';
 import { SAMPLES } from './samples.js';
 
-/** The options this demo exposes. Everything else stays at its default. */
 interface DemoOptions {
   preserveGroups: boolean;
   includeHidden: boolean;
@@ -29,7 +30,31 @@ const DEFAULTS: DemoOptions = {
   scale: 1,
 };
 
-const VIEWPORT = { width: 620, height: 460 };
+const OPTION_COPY: Array<{ key: keyof DemoOptions; label: string; hint: string }> = [
+  {
+    key: 'preserveGroups',
+    label: 'Preserve groups',
+    hint: 'Emit nested Fabric Groups instead of a flat object list.',
+  },
+  {
+    key: 'includeHidden',
+    label: 'Include hidden',
+    hint: 'Keep layers the file hid, marked visible: false.',
+  },
+  {
+    key: 'emitArtboard',
+    label: 'Emit artboard',
+    hint: 'Prepend a non-selectable page rect named “clip”.',
+  },
+  {
+    key: 'allowExternalResources',
+    label: 'Allow remote assets',
+    hint: 'Permit <image>/<use> pointing at another origin.',
+  },
+];
+
+type Tab = 'layers' | 'warnings' | 'json';
+type Backdrop = 'checker' | 'light' | 'dark';
 
 /** Metadata this package writes onto every object it produces. */
 function metaOf(object: FabricObject): { sourceLayerId?: string; sourcePath?: string[] } {
@@ -44,19 +69,34 @@ function allObjects(objects: readonly FabricObject[]): FabricObject[] {
   });
 }
 
+function formatBytes(bytes: number): string {
+  return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} kB`;
+}
+
 export function App() {
   const canvasElement = useRef<HTMLCanvasElement | null>(null);
   const canvas = useRef<Canvas | null>(null);
+  const stage = useRef<HTMLDivElement | null>(null);
+  const filePicker = useRef<HTMLInputElement | null>(null);
 
   const [result, setResult] = useState<ConversionResult | null>(null);
-  const [source, setSource] = useState<{ name: string; svg: string } | null>(null);
+  const [source, setSource] = useState<{ name: string; svg: string; bytes: number } | null>(null);
   const [options, setOptions] = useState<DemoOptions>(DEFAULTS);
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState('');
+
+  const [tab, setTab] = useState<Tab>('layers');
+  const [zoom, setZoom] = useState(1);
+  const [backdrop, setBackdrop] = useState<Backdrop>('checker');
+
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [elapsed, setElapsed] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   /* ------------------------------- the canvas ------------------------------ */
 
@@ -83,6 +123,35 @@ export function App() {
     };
   }, []);
 
+  const applyZoom = useCallback((next: number, design: { width: number; height: number }) => {
+    const instance = canvas.current;
+    if (!instance) return;
+
+    instance.setDimensions({ width: design.width * next, height: design.height * next });
+    instance.setZoom(next);
+    instance.requestRenderAll();
+  }, []);
+
+  /** The zoom at which the document just fits the stage, capped at 1:1. */
+  const fitZoom = useCallback((design: { width: number; height: number }) => {
+    const box = stage.current?.getBoundingClientRect();
+    const width = (box?.width ?? 640) - 48;
+    const height = (box?.height ?? 480) - 48;
+    return Math.min(width / design.width, height / design.height, 1);
+  }, []);
+
+  const zoomTo = (next: number): void => {
+    if (!result) return;
+    const clamped = Math.min(8, Math.max(0.05, next));
+    setZoom(clamped);
+    applyZoom(clamped, result.document);
+  };
+
+  const fit = (): void => {
+    if (!result) return;
+    zoomTo(fitZoom(result.document));
+  };
+
   /* ------------------------------ conversion ------------------------------- */
 
   const convert = useCallback(
@@ -103,37 +172,29 @@ export function App() {
         const converted = await convertSvgToFabric(svg, convertOptions);
         setElapsed(performance.now() - started);
         setResult(converted);
-        setSource({ name, svg });
+        setSource({ name, svg, bytes: new Blob([svg]).size });
         setHiddenIds(new Set());
+        setCollapsedIds(new Set());
         setSelectedId(null);
+        setTab('layers');
 
-        const instance = canvas.current;
-        if (!instance) return;
+        const next = fitZoom(converted.document);
+        setZoom(next);
+        applyZoom(next, converted.document);
 
-        // Fit the document into the viewport. `loadIntoFabric` replaces the
-        // canvas contents, which is what a demo wants; an editor importing into
-        // an existing design would call `addToFabric` instead.
-        const zoom = Math.min(
-          VIEWPORT.width / converted.document.width,
-          VIEWPORT.height / converted.document.height,
-          1,
-        );
-        instance.setDimensions({
-          width: converted.document.width * zoom,
-          height: converted.document.height * zoom,
-        });
-        instance.setZoom(zoom);
-
-        await loadIntoFabric(instance, converted);
+        // Replaces the canvas contents, which is what a demo wants; an editor
+        // importing into an existing design would call addToFabric instead.
+        await loadIntoFabric(canvas.current, converted);
       } catch (cause) {
         setResult(null);
+        setSource(null);
         setElapsed(null);
         setError(cause instanceof Error ? cause.message : String(cause));
       } finally {
         setBusy(false);
       }
     },
-    [],
+    [applyZoom, fitZoom],
   );
 
   /** Re-run the last conversion whenever an option changes. */
@@ -145,10 +206,20 @@ export function App() {
 
   const openFile = async (file: File): Promise<void> => {
     if (!/\.svg$/i.test(file.name) && file.type !== 'image/svg+xml') {
-      setError(`"${file.name}" is not an SVG.`);
+      setError(`“${file.name}” is not an SVG.`);
       return;
     }
     await convert(await file.text(), file.name, options);
+  };
+
+  const reset = (): void => {
+    canvas.current?.clear();
+    setResult(null);
+    setSource(null);
+    setError(null);
+    setElapsed(null);
+    setSelectedId(null);
+    setFilter('');
   };
 
   /* ------------------------- layer panel interaction ----------------------- */
@@ -206,9 +277,68 @@ export function App() {
     instance.requestRenderAll();
   };
 
-  /* --------------------------------- output -------------------------------- */
+  const toggleCollapse = (node: SvgNode): void => {
+    setCollapsedIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(node.id)) next.delete(node.id);
+      else next.add(node.id);
+      return next;
+    });
+  };
 
-  const json = result ? JSON.stringify(result.fabricJson, null, 2) : '';
+  /* --------------------------------- derived -------------------------------- */
+
+  const json = useMemo(
+    () => (result ? JSON.stringify(result.fabricJson, null, 2) : ''),
+    [result],
+  );
+
+  /** Search hits plus their ancestors, so a nested match stays reachable. */
+  const matchIds = useMemo<Set<string> | null>(() => {
+    if (!result || filter.trim() === '') return null;
+    const needle = filter.trim().toLowerCase();
+    const keep = new Set<string>();
+
+    const walk = (nodes: readonly SvgNode[], ancestors: string[]): void => {
+      for (const node of nodes) {
+        const hit =
+          node.name.toLowerCase().includes(needle) || node.tagName.includes(needle);
+        if (hit) {
+          keep.add(node.id);
+          for (const id of ancestors) keep.add(id);
+        }
+        if (node.children) walk(node.children, [...ancestors, node.id]);
+      }
+    };
+    walk(result.document.children, []);
+    return keep;
+  }, [result, filter]);
+
+  const stats = useMemo(() => {
+    if (!result) return null;
+    const nodes = flattenTree(result.document.children);
+    return {
+      layers: nodes.length,
+      groups: nodes.filter((node) => node.type === 'group').length,
+      objects: result.fabricJson.objects.length,
+      bytes: new Blob([json]).size,
+    };
+  }, [result, json]);
+
+  const selected = result && selectedId ? findNode(result.document.children, selectedId) : undefined;
+
+  const bySeverity = useMemo(() => {
+    const order = { error: 0, warning: 1, info: 2 } as const;
+    return [...(result?.warnings ?? [])].sort(
+      (a, b) => order[a.severity] - order[b.severity],
+    );
+  }, [result]);
+
+  const copyJson = async (): Promise<void> => {
+    await navigator.clipboard.writeText(json);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  };
 
   const download = (): void => {
     const blob = new Blob([json], { type: 'application/json' });
@@ -220,175 +350,354 @@ export function App() {
     URL.revokeObjectURL(url);
   };
 
-  const layerCount = result ? flattenTree(result.document.children).length : 0;
+  /* ---------------------------------- view ---------------------------------- */
 
   return (
-    <div className="app">
-      <header>
-        <h1>
-          svg<span>→</span>fabric
-        </h1>
-        <p>Drop an SVG. Get named, editable Fabric.js layers.</p>
+    <div
+      className={`shell${dragging ? ' is-dragging' : ''}`}
+      onDragOver={(event) => {
+        event.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={(event) => {
+        if (event.currentTarget === event.target) setDragging(false);
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        setDragging(false);
+        const file = event.dataTransfer.files[0];
+        if (file) void openFile(file);
+      }}
+    >
+      <header className="topbar">
+        <div className="brand">
+          <span className="mark">
+            svg<i>→</i>fabric
+          </span>
+          <span className="tagline">named, editable Fabric.js layers</span>
+        </div>
+
+        <div className="topbar-right">
+          {source && (
+            <span className="file-chip" title={source.name}>
+              {source.name}
+              <em>{formatBytes(source.bytes)}</em>
+            </span>
+          )}
+          <button className="btn btn-primary" onClick={() => filePicker.current?.click()}>
+            <Icon name="upload" size={14} /> Import SVG
+          </button>
+          {result && (
+            <button className="btn" onClick={reset} title="Clear the canvas">
+              <Icon name="reset" size={14} />
+            </button>
+          )}
+        </div>
+
+        <input
+          ref={filePicker}
+          type="file"
+          accept=".svg,image/svg+xml"
+          hidden
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void openFile(file);
+            event.target.value = '';
+          }}
+        />
       </header>
 
-      <div className="grid">
-        {/* ------------------------------ input ----------------------------- */}
-        <section className="panel">
-          <h2>1 · Input</h2>
+      <main className="workspace">
+        {/* ------------------------------ left rail ----------------------------- */}
+        <aside className="rail">
+          <section className="block">
+            <h2>Samples</h2>
+            <div className="samples">
+              {SAMPLES.map((sample) => (
+                <button
+                  key={sample.label}
+                  className={`sample${source?.name === `${sample.label}.svg` ? ' is-active' : ''}`}
+                  title={sample.note}
+                  onClick={() => void convert(sample.svg, `${sample.label}.svg`, options)}
+                >
+                  <strong>{sample.label}</strong>
+                  <span>{sample.note}</span>
+                </button>
+              ))}
+            </div>
+          </section>
 
-          <label
-            className={`dropzone${dragging ? ' is-dragging' : ''}`}
-            onDragOver={(event) => {
-              event.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setDragging(false);
-              const file = event.dataTransfer.files[0];
-              if (file) void openFile(file);
-            }}
-          >
-            <input
-              type="file"
-              accept=".svg,image/svg+xml"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void openFile(file);
-                event.target.value = '';
-              }}
-            />
-            <strong>Drop an SVG here</strong>
-            <span>or click to choose a file</span>
-          </label>
+          <section className="block">
+            <h2>Options</h2>
+            <div className="options">
+              {OPTION_COPY.map(({ key, label, hint }) => (
+                <label key={key} className="toggle">
+                  <input
+                    type="checkbox"
+                    checked={options[key] as boolean}
+                    onChange={(event) => updateOption(key, event.target.checked as never)}
+                  />
+                  <span className="track" aria-hidden="true" />
+                  <span className="toggle-text">
+                    <strong>{label}</strong>
+                    <em>{hint}</em>
+                  </span>
+                </label>
+              ))}
 
-          <div className="samples">
-            {SAMPLES.map((sample) => (
-              <button
-                key={sample.label}
-                className="sample"
-                title={sample.note}
-                onClick={() => void convert(sample.svg, `${sample.label}.svg`, options)}
-              >
-                {sample.label}
-              </button>
-            ))}
-          </div>
-
-          <h3>Options</h3>
-          <div className="options">
-            {(
-              [
-                ['preserveGroups', 'Emit Fabric Groups instead of a flat list'],
-                ['includeHidden', 'Keep hidden layers, marked hidden'],
-                ['emitArtboard', 'Prepend a page rect named “clip”'],
-                ['allowExternalResources', 'Permit other-origin images'],
-              ] as const
-            ).map(([key, hint]) => (
-              <label key={key} title={hint}>
+              <div className="slider">
+                <div className="slider-head">
+                  <strong>Scale</strong>
+                  <span>{options.scale}×</span>
+                </div>
                 <input
-                  type="checkbox"
-                  checked={options[key]}
-                  onChange={(event) => updateOption(key, event.target.checked)}
+                  type="range"
+                  min={1}
+                  max={8}
+                  step={1}
+                  value={options.scale}
+                  onChange={(event) => updateOption('scale', Number(event.target.value))}
                 />
-                <code>{key}</code>
-              </label>
-            ))}
+                <em>Applied at parse time, so path data stays exact.</em>
+              </div>
+            </div>
+          </section>
+        </aside>
 
-            <label className="scale" title="Applied at parse time, so path data stays exact">
-              <code>scale</code>
-              <input
-                type="range"
-                min={1}
-                max={8}
-                step={1}
-                value={options.scale}
-                onChange={(event) => updateOption('scale', Number(event.target.value))}
-              />
-              <span>{options.scale}×</span>
-            </label>
+        {/* ------------------------------- canvas ------------------------------- */}
+        <section className="canvas-pane">
+          <div className="pane-bar">
+            <div className="zoom">
+              <button className="icon-btn" onClick={() => zoomTo(zoom / 1.25)} disabled={!result}>
+                <Icon name="zoomOut" size={15} />
+              </button>
+              <span className="zoom-value">{Math.round(zoom * 100)}%</span>
+              <button className="icon-btn" onClick={() => zoomTo(zoom * 1.25)} disabled={!result}>
+                <Icon name="zoomIn" size={15} />
+              </button>
+              <button className="icon-btn" onClick={fit} disabled={!result} title="Fit to view">
+                <Icon name="fit" size={15} />
+              </button>
+              <button
+                className="icon-btn text"
+                onClick={() => zoomTo(1)}
+                disabled={!result}
+                title="Actual size"
+              >
+                1:1
+              </button>
+            </div>
+
+            <div className="backdrops">
+              {(['checker', 'light', 'dark'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  className={`swatch swatch-${mode}${backdrop === mode ? ' is-active' : ''}`}
+                  onClick={() => setBackdrop(mode)}
+                  title={`${mode} backdrop`}
+                  aria-label={`${mode} backdrop`}
+                />
+              ))}
+            </div>
           </div>
 
-          {error && <p className="error">{error}</p>}
+          <div ref={stage} className={`stage stage-${backdrop}`}>
+            <canvas ref={canvasElement} />
+
+            {!result && !busy && (
+              <div className="empty-state">
+                <Icon name="upload" size={26} />
+                <strong>Drop an SVG anywhere</strong>
+                <span>or pick a sample on the left</span>
+              </div>
+            )}
+            {busy && <div className="empty-state"><span className="spinner" />Converting…</div>}
+          </div>
+
+          {error && (
+            <p className="error">
+              <Icon name="error" size={15} />
+              {error}
+            </p>
+          )}
         </section>
 
-        {/* ----------------------------- canvas ----------------------------- */}
-        <section className="panel">
-          <h2>
-            2 · Canvas
-            {result && (
-              <em>
-                {Math.round(result.document.width)} × {Math.round(result.document.height)}
-                {elapsed !== null && ` · ${elapsed.toFixed(0)} ms`}
-              </em>
-            )}
-          </h2>
-
-          <div className="stage" style={{ minHeight: VIEWPORT.height }}>
-            <canvas ref={canvasElement} />
-            {!result && !busy && <p className="empty">Nothing loaded yet</p>}
-            {busy && <p className="empty">Converting…</p>}
+        {/* ------------------------------ inspector ----------------------------- */}
+        <aside className="inspector">
+          <div className="tabs" role="tablist">
+            <button
+              role="tab"
+              className={tab === 'layers' ? 'is-active' : ''}
+              onClick={() => setTab('layers')}
+            >
+              Layers {stats && <b>{stats.layers}</b>}
+            </button>
+            <button
+              role="tab"
+              className={tab === 'warnings' ? 'is-active' : ''}
+              onClick={() => setTab('warnings')}
+            >
+              Warnings
+              {result && result.warnings.length > 0 && (
+                <b className="b-warn">{result.warnings.length}</b>
+              )}
+            </button>
+            <button
+              role="tab"
+              className={tab === 'json' ? 'is-active' : ''}
+              onClick={() => setTab('json')}
+            >
+              JSON
+            </button>
           </div>
 
-          {result && result.warnings.length > 0 && (
-            <div className="warnings">
-              <h3>Warnings ({result.warnings.length})</h3>
-              <ul>
-                {result.warnings.map((warning, index) => (
-                  <li key={index} className={`w-${warning.severity}`}>
-                    <code>{warning.code}</code> {warning.message}
-                  </li>
-                ))}
-              </ul>
+          {!result && <p className="empty-note">Convert a file to inspect it.</p>}
+
+          {result && tab === 'layers' && (
+            <>
+              <div className="search">
+                <Icon name="search" size={13} />
+                <input
+                  placeholder="Filter layers…"
+                  value={filter}
+                  onChange={(event) => setFilter(event.target.value)}
+                />
+                {filter && (
+                  <button onClick={() => setFilter('')} aria-label="Clear filter">
+                    <Icon name="close" size={12} />
+                  </button>
+                )}
+              </div>
+
+              <div className="scroll">
+                <LayerTree
+                  nodes={result.document.children}
+                  selectedId={selectedId}
+                  hiddenIds={hiddenIds}
+                  collapsedIds={collapsedIds}
+                  matchIds={matchIds}
+                  onSelect={selectLayer}
+                  onToggleVisible={toggleVisible}
+                  onToggleCollapse={toggleCollapse}
+                />
+                {matchIds?.size === 0 && <p className="empty-note">No layer matches “{filter}”.</p>}
+              </div>
+
+              {selected && (
+                <div className="details">
+                  <h3>{selected.name}</h3>
+                  <dl>
+                    <dt>id</dt>
+                    <dd>{selected.id}</dd>
+                    <dt>tag</dt>
+                    <dd>&lt;{selected.tagName}&gt;</dd>
+                    <dt>type</dt>
+                    <dd>{selected.type}</dd>
+                    {selected.sourceId && (
+                      <>
+                        <dt>source id</dt>
+                        <dd>{selected.sourceId}</dd>
+                      </>
+                    )}
+                    <dt>bounds</dt>
+                    <dd>
+                      {Math.round(selected.bounds.width)} × {Math.round(selected.bounds.height)} at{' '}
+                      {Math.round(selected.bounds.left)}, {Math.round(selected.bounds.top)}
+                    </dd>
+                    <dt>opacity</dt>
+                    <dd>{selected.opacity}</dd>
+                  </dl>
+                </div>
+              )}
+            </>
+          )}
+
+          {result && tab === 'warnings' && (
+            <div className="scroll">
+              {bySeverity.length === 0 ? (
+                <p className="empty-note">Nothing to report — everything converted cleanly.</p>
+              ) : (
+                <ul className="warnings">
+                  {bySeverity.map((warning, index) => (
+                    <li key={index} className={`w-${warning.severity}`}>
+                      <Icon
+                        name={
+                          warning.severity === 'error'
+                            ? 'error'
+                            : warning.severity === 'warning'
+                              ? 'alert'
+                              : 'info'
+                        }
+                        size={14}
+                      />
+                      <div>
+                        <code>{warning.code}</code>
+                        <p>{warning.message}</p>
+                        {warning.layerName && <em>on “{warning.layerName}”</em>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
-        </section>
 
-        {/* ----------------------------- layers ----------------------------- */}
-        <section className="panel">
-          <h2>
-            3 · Layers{result && <em>{layerCount} nodes</em>}
-          </h2>
-
-          {result ? (
-            <LayerTree
-              nodes={result.document.children}
-              selectedId={selectedId}
-              hiddenIds={hiddenIds}
-              onSelect={selectLayer}
-              onToggleVisible={toggleVisible}
-            />
-          ) : (
-            <p className="empty">The layer tree appears here</p>
-          )}
-        </section>
-
-        {/* ------------------------------ json ------------------------------ */}
-        <section className="panel json-panel">
-          <h2>
-            4 · Fabric JSON
-            {result && (
-              <em>
-                {result.fabricJson.objects.length} top-level ·{' '}
-                {(new Blob([json]).size / 1024).toFixed(1)} kB
-              </em>
-            )}
-          </h2>
-
-          {result ? (
+          {result && tab === 'json' && (
             <>
               <div className="json-actions">
-                <button onClick={() => void navigator.clipboard.writeText(json)}>Copy</button>
-                <button onClick={download}>Download .json</button>
+                <button className="btn" onClick={() => void copyJson()}>
+                  <Icon name="copy" size={14} /> {copied ? 'Copied' : 'Copy'}
+                </button>
+                <button className="btn" onClick={download}>
+                  <Icon name="download" size={14} /> Download
+                </button>
               </div>
-              <pre className="json">{json}</pre>
+              <div className="scroll">
+                <pre className="json">{json}</pre>
+              </div>
             </>
-          ) : (
-            <p className="empty">The JSON your editor consumes appears here</p>
           )}
-        </section>
-      </div>
+        </aside>
+      </main>
+
+      <footer className="statusbar">
+        {result && stats ? (
+          <>
+            <span>
+              <b>{Math.round(result.document.width)} × {Math.round(result.document.height)}</b> px
+            </span>
+            <span>
+              <b>{stats.layers}</b> layers · <b>{stats.groups}</b> groups
+            </span>
+            <span>
+              <b>{stats.objects}</b> top-level object{stats.objects === 1 ? '' : 's'}
+            </span>
+            <span>
+              JSON <b>{formatBytes(stats.bytes)}</b>
+            </span>
+            <span className="spacer" />
+            <span className={options.preserveGroups ? 'flag is-on' : 'flag'}>
+              {options.preserveGroups ? 'nested groups' : 'flattened'}
+            </span>
+            {elapsed !== null && (
+              <span>
+                converted in <b>{elapsed.toFixed(0)} ms</b>
+              </span>
+            )}
+          </>
+        ) : (
+          <span className="muted">No document loaded</span>
+        )}
+      </footer>
+
+      {dragging && (
+        <div className="drop-overlay">
+          <div>
+            <Icon name="upload" size={30} />
+            <strong>Drop to convert</strong>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
