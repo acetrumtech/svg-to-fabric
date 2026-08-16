@@ -3,7 +3,88 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@acetrumtech/svg-to-fabric — demo</title>
+
+    <title>SVG to Fabric.js JSON — convert SVG into named, editable layers</title>
+    <meta
+      name="description"
+      content="Free in-browser tool that converts an SVG into Fabric.js JSON with its group hierarchy and layer names intact. Drop a file from Figma, Illustrator or Inkscape and get editable Fabric layers, a layer tree and downloadable JSON."
+    />
+    <link rel="canonical" href="https://acetrumtech.github.io/svg-to-fabric/" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="Acetrum" />
+    <meta name="theme-color" content="#5b5bd6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#080b11" media="(prefers-color-scheme: dark)" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="svg-to-fabric" />
+    <meta property="og:url" content="https://acetrumtech.github.io/svg-to-fabric/" />
+    <meta property="og:title" content="SVG to Fabric.js JSON — named, editable layers" />
+    <meta
+      property="og:description"
+      content="Convert an SVG into Fabric.js JSON with its group hierarchy and layer names preserved. Runs entirely in your browser — nothing is uploaded."
+    />
+    <meta property="og:image" content="https://acetrumtech.github.io/svg-to-fabric/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="svg to fabric — an SVG converted into a named Fabric.js layer tree"
+    />
+
+    <!-- Twitter/X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SVG to Fabric.js JSON — named, editable layers" />
+    <meta
+      name="twitter:description"
+      content="Convert an SVG into Fabric.js JSON with its group hierarchy and layer names preserved. Runs entirely in your browser."
+    />
+    <meta name="twitter:image" content="https://acetrumtech.github.io/svg-to-fabric/og.png" />
+
+    <!--
+      Inline favicon, so the page needs no extra request and no binary asset in
+      the repo. The mark matches the app: an accent-coloured layer stack.
+    -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%235b5bd6'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.2' stroke-linejoin='round'%3E%3Cpath d='M16 6 26 11.5 16 17 6 11.5z'/%3E%3Cpath d='M6 16.5 16 22 26 16.5'/%3E%3Cpath d='M6 21.5 16 27 26 21.5'/%3E%3C/g%3E%3C/svg%3E"
+    />
+
+    <!--
+      Structured data. `SoftwareApplication` is what a converter tool is; the
+      `offers` block at price 0 is how a crawler is told it is free without a
+      marketing claim anywhere in the copy.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "svg-to-fabric",
+        "alternateName": "SVG to Fabric.js JSON converter",
+        "url": "https://acetrumtech.github.io/svg-to-fabric/",
+        "applicationCategory": "DeveloperApplication",
+        "applicationSubCategory": "Graphics converter",
+        "operatingSystem": "Any (runs in a web browser)",
+        "description": "Converts an SVG into Fabric.js JSON with its group hierarchy and layer names preserved, so an editor can show a real layers panel. Runs entirely in the browser.",
+        "browserRequirements": "Requires JavaScript and a modern browser",
+        "softwareVersion": "0.1.0",
+        "license": "https://opensource.org/licenses/MIT",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Organization",
+          "name": "Acetrum",
+          "url": "https://acetrum.com"
+        },
+        "codeRepository": "https://github.com/acetrumtech/svg-to-fabric",
+        "installUrl": "https://www.npmjs.com/package/@acetrumtech/svg-to-fabric",
+        "keywords": "SVG, Fabric.js, canvas, converter, layers, SVG to JSON, Figma, Illustrator, Inkscape"
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

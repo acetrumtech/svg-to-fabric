@@ -189,6 +189,56 @@ button {
   gap: 8px;
 }
 
+.install {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.14s, color 0.14s;
+}
+
+.install:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.install code {
+  font: 11.5px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.ext {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 12px;
+  transition: background 0.13s, color 0.13s;
+}
+
+.ext:hover {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+
+.ext-icon {
+  padding: 5px 7px;
+}
+
+.sep {
+  width: 1px;
+  height: 20px;
+  background: var(--line);
+  margin: 0 2px;
+}
+
 .file-chip {
   display: inline-flex;
   align-items: baseline;
@@ -1014,6 +1064,42 @@ button {
   font-weight: 600;
 }
 
+.statusbar .muted {
+  color: var(--dim);
+}
+
+.by {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  margin-right: -4px;
+  border-radius: 999px;
+  color: var(--dim);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.13s, color 0.13s;
+}
+
+.by:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.by picture,
+.by img {
+  display: block;
+}
+
+.by strong {
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.by:hover strong {
+  color: var(--text);
+}
+
 /* ============================== drop overlay =============================== */
 
 .drop-overlay {
@@ -1053,9 +1139,19 @@ button {
   }
 }
 
+@media (max-width: 1180px) {
+  .install {
+    display: none;
+  }
+}
+
 @media (max-width: 940px) {
   body {
     overflow: auto;
+  }
+  .ext,
+  .sep {
+    display: none;
   }
   .shell {
     height: auto;

@@ -55,6 +55,25 @@ const OPTION_COPY: Array<{ key: keyof DemoOptions; label: string; hint: string }
 type Tab = 'layers' | 'warnings' | 'json';
 type Backdrop = 'checker' | 'light' | 'dark';
 
+const PACKAGE = '@acetrumtech/svg-to-fabric';
+const NPM_URL = `https://www.npmjs.com/package/${PACKAGE}`;
+const REPO_URL = 'https://github.com/acetrumtech/svg-to-fabric';
+const SITE_URL = 'https://acetrum.com';
+const INSTALL = `npm i ${PACKAGE} fabric`;
+/*
+ * Served from this site rather than hot-linked from acetrum.com. A static demo
+ * with no external requests cannot be broken by someone else's uptime, CORS
+ * policy or a logo rename — and the footer would show a broken image if any of
+ * those changed.
+ *
+ * The file names invert what they are for, which is worth stating plainly:
+ * `acetrum-logo-dark.svg` is the *dark-ink* mark, so it is the one that reads
+ * on a light background; `acetrum-logo.svg` is white-ink and belongs on a dark
+ * one. Named here by the ground they sit on rather than by their filename.
+ */
+const LOGO_ON_LIGHT = `${import.meta.env.BASE_URL}acetrum-logo-dark.svg`;
+const LOGO_ON_DARK = `${import.meta.env.BASE_URL}acetrum-logo.svg`;
+
 /** Metadata this package writes onto every object it produces. */
 function metaOf(object: FabricObject): { sourceLayerId?: string; sourcePath?: string[] } {
   return (object as unknown as Record<string, never>)[ACETRUM_PROP] ?? {};
@@ -96,6 +115,7 @@ export function App() {
   const [elapsed, setElapsed] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [installCopied, setInstallCopied] = useState(false);
 
   /* ------------------------------- the canvas ------------------------------ */
 
@@ -380,6 +400,43 @@ export function App() {
         </div>
 
         <div className="topbar-right">
+          <button
+            className="install"
+            title="Copy install command"
+            onClick={() => {
+              void navigator.clipboard.writeText(INSTALL);
+              setInstallCopied(true);
+              setTimeout(() => setInstallCopied(false), 1600);
+            }}
+          >
+            <code>{INSTALL}</code>
+            <Icon name={installCopied ? 'check' : 'copy'} size={12} />
+          </button>
+
+          <a
+            className="ext"
+            href={NPM_URL}
+            target="_blank"
+            rel="noreferrer noopener"
+            title={`${PACKAGE} on npm`}
+          >
+            npm
+            <Icon name="external" size={11} />
+          </a>
+
+          <a
+            className="ext ext-icon"
+            href={REPO_URL}
+            target="_blank"
+            rel="noreferrer noopener"
+            title="Source on GitHub"
+            aria-label="Source on GitHub"
+          >
+            <Icon name="github" size={15} />
+          </a>
+
+          <span className="sep" aria-hidden="true" />
+
           {source && (
             <span className="file-chip" title={source.name}>
               {source.name}
@@ -674,8 +731,22 @@ export function App() {
             )}
           </>
         ) : (
-          <span className="muted">No document loaded</span>
+          <>
+            <span className="muted">No document loaded</span>
+            <span className="spacer" />
+          </>
         )}
+
+        <a className="by" href={SITE_URL} target="_blank" rel="noreferrer noopener">
+          provided by
+          {/* <picture> rather than two hidden <img>s: the browser fetches only
+              the variant it will actually show. */}
+          <picture>
+            <source srcSet={LOGO_ON_DARK} media="(prefers-color-scheme: dark)" />
+            <img src={LOGO_ON_LIGHT} alt="" width="15" height="15" />
+          </picture>
+          <strong>Acetrum</strong>
+        </a>
       </footer>
 
       {dragging && (

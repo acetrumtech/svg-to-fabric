@@ -26,7 +26,10 @@ export type IconName =
   | 'alert'
   | 'info'
   | 'error'
-  | 'reset';
+  | 'reset'
+  | 'check'
+  | 'external'
+  | 'github';
 
 const PATHS: Record<IconName, string> = {
   group: 'M2 4.5A1.5 1.5 0 0 1 3.5 3h3l1.5 2h4.5A1.5 1.5 0 0 1 14 6.5v5A1.5 1.5 0 0 1 12.5 13h-9A1.5 1.5 0 0 1 2 11.5z',
@@ -50,7 +53,15 @@ const PATHS: Record<IconName, string> = {
   info: 'M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12zM8 7.5v3.2M8 5.3h.01',
   error: 'M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12zM5.9 5.9l4.2 4.2M10.1 5.9l-4.2 4.2',
   reset: 'M13.5 8a5.5 5.5 0 1 1-1.7-4M13.5 2.5V6H10',
+  check: 'M3 8.4 6.3 11.7 13 5',
+  external: 'M9.5 2.5H13.5V6.5M13.5 2.5 7.5 8.5M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3',
+  // GitHub's own mark, which is a filled shape rather than a stroked one.
+  github:
+    'M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z',
 };
+
+/** Icons drawn as a filled shape instead of a stroked outline. */
+const FILLED = new Set<IconName>(['github']);
 
 export interface IconProps {
   name: IconName;
@@ -59,14 +70,16 @@ export interface IconProps {
 }
 
 export function Icon({ name, size = 16, className }: IconProps) {
+  const filled = FILLED.has(name);
+
   return (
     <svg
       className={className}
       width={size}
       height={size}
       viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke={filled ? 'none' : 'currentColor'}
       strokeWidth="1.3"
       strokeLinecap="round"
       strokeLinejoin="round"
