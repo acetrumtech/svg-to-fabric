@@ -1,21 +1,95 @@
+/*
+ * Light-first, with a dark override.
+ *
+ * Every colour is a token on :root, and the dark block redefines only the
+ * tokens — no rule below this section names a literal colour, so the two themes
+ * cannot drift apart. The canvas backdrops (checker/light/dark) are deliberately
+ * *not* themed: they are the user's choice of what to judge artwork against, and
+ * a white logo has to be checkable on a dark ground whatever the UI is doing.
+ */
 :root {
-  --bg: #080b11;
-  --surface: #0f141e;
-  --surface-2: #151c29;
-  --surface-3: #1b2433;
-  --line: #212c3e;
-  --line-soft: #1a2331;
-  --text: #e9eef8;
-  --muted: #8496b4;
-  --dim: #5d6d88;
-  --accent: #5b9dff;
-  --accent-soft: #142440;
-  --warn: #f6b73c;
-  --err: #f4726b;
-  --ok: #4ade80;
+  --bg: #f2f4f8;
+  --surface: #ffffff;
+  --surface-2: #f5f7fb;
+  --surface-3: #e9edf5;
+  --line: #dfe5ef;
+  --line-soft: #ebeff6;
+
+  --text: #101728;
+  --muted: #55637b;
+  --dim: #8593a9;
+
+  --accent: #5b5bd6;
+  --accent-hover: #4a4ac4;
+  --accent-ink: #ffffff;
+  --accent-wash: #eeeefc;
+  --accent-line: #c9c9f5;
+
+  --warn: #b45309;
+  --warn-wash: #fdf5e6;
+  --err: #d92d4e;
+  --err-wash: #fdeef1;
+  --err-line: #f6cdd6;
+
+  --type-group: #64748b;
+  --type-path: #2563eb;
+  --type-shape: #059669;
+  --type-text: #d97706;
+  --type-image: #7c3aed;
+
+  /* The neutral backdrop follows the theme; the light/dark ones do not. */
+  --checker-bg: #ffffff;
+  --checker-line: #e3e8f0;
+
+  --shadow-sm: 0 1px 2px rgba(16, 23, 40, 0.05);
+  --shadow-md: 0 2px 8px rgba(16, 23, 40, 0.07);
+  --shadow-art: 0 12px 36px rgba(16, 23, 40, 0.16);
+
   --radius: 10px;
   --bar: 52px;
-  color-scheme: dark;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #080b11;
+    --surface: #0f141e;
+    --surface-2: #151c29;
+    --surface-3: #1d2534;
+    --line: #222d3f;
+    --line-soft: #1a2331;
+
+    --text: #e9eef8;
+    --muted: #8496b4;
+    --dim: #5d6d88;
+
+    --accent: #7c7cf0;
+    --accent-hover: #9494f5;
+    --accent-ink: #0a0c1a;
+    --accent-wash: #1a1b3a;
+    --accent-line: #33347a;
+
+    --warn: #f6b73c;
+    --warn-wash: #2c2411;
+    --err: #f4726b;
+    --err-wash: #2a1116;
+    --err-line: #59222a;
+
+    --type-group: #94a7c4;
+    --type-path: #7cc4ff;
+    --type-shape: #86e0b0;
+    --type-text: #f0c674;
+    --type-image: #d29ef0;
+
+    --checker-bg: #10151f;
+    --checker-line: #1b2431;
+
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-art: 0 12px 40px rgba(0, 0, 0, 0.55);
+
+    color-scheme: dark;
+  }
 }
 
 * {
@@ -42,6 +116,23 @@ button {
   color: inherit;
 }
 
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dim);
+  background-clip: content-box;
+}
+
 /* ================================== shell ================================== */
 
 .shell {
@@ -60,6 +151,8 @@ button {
   padding: 0 16px;
   border-bottom: 1px solid var(--line);
   background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  z-index: 2;
 }
 
 .brand {
@@ -71,15 +164,15 @@ button {
 
 .mark {
   font-size: 15px;
-  font-weight: 650;
-  letter-spacing: -0.015em;
+  font-weight: 680;
+  letter-spacing: -0.02em;
   white-space: nowrap;
 }
 
 .mark i {
   color: var(--accent);
   font-style: normal;
-  margin: 0 2px;
+  margin: 0 3px;
 }
 
 .tagline {
@@ -101,7 +194,7 @@ button {
   align-items: baseline;
   gap: 8px;
   max-width: 260px;
-  padding: 4px 10px;
+  padding: 4px 11px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface-2);
@@ -124,27 +217,28 @@ button {
   padding: 6px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--surface-2);
+  background: var(--surface);
   cursor: pointer;
   font-size: 12px;
+  box-shadow: var(--shadow-sm);
   transition: border-color 0.14s, background 0.14s, color 0.14s;
 }
 
 .btn:hover {
-  border-color: #33445e;
-  background: var(--surface-3);
+  border-color: var(--dim);
+  background: var(--surface-2);
 }
 
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #06101f;
+  color: var(--accent-ink);
   font-weight: 600;
 }
 
 .btn-primary:hover {
-  background: #7cb0ff;
-  border-color: #7cb0ff;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 /* =============================== workspace ================================= */
@@ -175,14 +269,13 @@ button {
 
 .block {
   padding: 14px;
-  border-bottom: 1px solid var(--line-soft);
 }
 
 .block h2,
 .details h3 {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   font-size: 10.5px;
-  font-weight: 600;
+  font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.09em;
   color: var(--dim);
@@ -193,13 +286,13 @@ button {
 .options {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 13px;
 }
 
 .toggle {
   display: grid;
   grid-template-columns: 30px 1fr;
-  gap: 9px;
+  gap: 10px;
   cursor: pointer;
   align-items: start;
 }
@@ -238,13 +331,13 @@ button {
 
 .toggle input:checked + .track::after {
   transform: translateX(13px);
-  background: #06101f;
+  background: var(--accent-ink);
 }
 
 .toggle-text strong {
   display: block;
   font-size: 12.5px;
-  font-weight: 550;
+  font-weight: 600;
 }
 
 .toggle-text em {
@@ -252,11 +345,11 @@ button {
   color: var(--dim);
   font-style: normal;
   font-size: 11px;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
 .slider {
-  padding-top: 4px;
+  padding-top: 12px;
   border-top: 1px solid var(--line-soft);
 }
 
@@ -264,16 +357,17 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 
 .slider-head strong {
   font-size: 12.5px;
-  font-weight: 550;
+  font-weight: 600;
 }
 
 .slider-head span {
   color: var(--accent);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -284,10 +378,11 @@ button {
 
 .slider em {
   display: block;
-  margin-top: 4px;
+  margin-top: 6px;
   color: var(--dim);
   font-style: normal;
   font-size: 11px;
+  line-height: 1.4;
 }
 
 /* ============================== canvas pane ================================ */
@@ -369,27 +464,29 @@ button {
 }
 
 .swatch.is-active {
-  outline: 1.5px solid var(--accent);
+  outline: 2px solid var(--accent);
   outline-offset: 1.5px;
 }
 
 .swatch-checker {
-  background-color: #202a3a;
+  background-color: var(--checker-bg);
   background-image:
-    linear-gradient(45deg, #33405a 25%, transparent 25%),
-    linear-gradient(-45deg, #33405a 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #33405a 75%),
-    linear-gradient(-45deg, transparent 75%, #33405a 75%);
+    linear-gradient(45deg, var(--checker-line) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--checker-line) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--checker-line) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--checker-line) 75%);
   background-size: 8px 8px;
   background-position: 0 0, 0 4px, 4px -4px, -4px 0;
 }
 
+/* Fixed: these two exist precisely to override the theme, so a white logo can
+   be checked against black and a black one against white. */
 .swatch-light {
-  background: #f4f6fa;
+  background: #ffffff;
 }
 
 .swatch-dark {
-  background: #0c0f16;
+  background: #14161c;
 }
 
 .stage {
@@ -402,26 +499,27 @@ button {
 }
 
 .stage-checker {
-  background-color: #10151f;
+  background-color: var(--checker-bg);
   background-image:
-    linear-gradient(45deg, #19212f 25%, transparent 25%),
-    linear-gradient(-45deg, #19212f 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #19212f 75%),
-    linear-gradient(-45deg, transparent 75%, #19212f 75%);
+    linear-gradient(45deg, var(--checker-line) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--checker-line) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--checker-line) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--checker-line) 75%);
   background-size: 18px 18px;
   background-position: 0 0, 0 9px, 9px -9px, -9px 0;
 }
 
 .stage-light {
-  background: #eef1f6;
+  background: #ffffff;
 }
 
 .stage-dark {
-  background: #05070b;
+  background: #14161c;
 }
 
 .stage .canvas-container {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-art);
+  border-radius: 2px;
 }
 
 .empty-state {
@@ -436,10 +534,15 @@ button {
   pointer-events: none;
 }
 
+.empty-state > svg {
+  color: var(--accent);
+  opacity: 0.75;
+}
+
 .empty-state strong {
   color: var(--muted);
-  font-size: 13.5px;
-  font-weight: 550;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .empty-state span {
@@ -447,7 +550,7 @@ button {
 }
 
 .empty-state .btn {
-  margin-top: 6px;
+  margin-top: 8px;
   pointer-events: auto;
 }
 
@@ -472,15 +575,14 @@ button {
   gap: 8px;
   margin: 0;
   padding: 10px 14px;
-  border-top: 1px solid #59222a;
-  background: #2a1116;
-  color: #fecdd0;
+  border-top: 1px solid var(--err-line);
+  background: var(--err-wash);
+  color: var(--err);
   font-size: 12.5px;
 }
 
 .error svg {
   flex: none;
-  color: var(--err);
 }
 
 /* =============================== inspector ================================= */
@@ -512,7 +614,8 @@ button {
 }
 
 .tabs button.is-active {
-  color: var(--text);
+  color: var(--accent);
+  font-weight: 600;
   border-bottom-color: var(--accent);
 }
 
@@ -522,12 +625,17 @@ button {
   background: var(--surface-3);
   color: var(--muted);
   font-size: 10.5px;
-  font-weight: 600;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 
+.tabs button.is-active b {
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+
 .tabs b.b-warn {
-  background: #3d2f12;
+  background: var(--warn-wash);
   color: var(--warn);
 }
 
@@ -558,10 +666,12 @@ button {
   background: var(--surface-2);
   color: var(--dim);
   flex: none;
+  transition: border-color 0.14s, box-shadow 0.14s;
 }
 
 .search:focus-within {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
 }
 
 .search input {
@@ -610,13 +720,18 @@ button {
 }
 
 .layer.is-selected {
-  background: #16294a;
+  background: var(--accent-wash);
   border-left-color: var(--accent);
+}
+
+.layer.is-selected .name {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .layer.is-hidden .name,
 .layer.is-hidden .glyph {
-  opacity: 0.38;
+  opacity: 0.42;
 }
 
 .twisty,
@@ -669,19 +784,19 @@ button {
 }
 
 .glyph-group {
-  color: #94a7c4;
+  color: var(--type-group);
 }
 .glyph-path {
-  color: #7cc4ff;
+  color: var(--type-path);
 }
 .glyph-shape {
-  color: #86e0b0;
+  color: var(--type-shape);
 }
 .glyph-text {
-  color: #f0c674;
+  color: var(--type-text);
 }
 .glyph-image {
-  color: #d29ef0;
+  color: var(--type-image);
 }
 
 .layer-name .name {
@@ -696,13 +811,13 @@ button {
   padding: 0 5px;
   border-radius: 4px;
   background: var(--surface-3);
-  color: var(--dim);
+  color: var(--muted);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
 
 .chip-warn {
-  background: #3d2f12;
+  background: var(--warn-wash);
   color: var(--warn);
   font-weight: 700;
 }
@@ -747,7 +862,8 @@ button {
   text-transform: none;
   letter-spacing: 0;
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 650;
+  margin-bottom: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -756,7 +872,7 @@ button {
 .details dl {
   display: grid;
   grid-template-columns: 70px 1fr;
-  gap: 3px 10px;
+  gap: 4px 10px;
   margin: 0;
   font-size: 11.5px;
 }
@@ -788,8 +904,9 @@ button {
   display: flex;
   gap: 8px;
   padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-left-width: 2px;
   border-radius: 7px;
-  border-left: 2px solid var(--line);
   background: var(--surface-2);
 }
 
@@ -824,6 +941,7 @@ button {
 
 .w-warning {
   border-left-color: var(--warn);
+  background: var(--warn-wash);
 }
 .w-warning svg,
 .w-warning code {
@@ -832,6 +950,7 @@ button {
 
 .w-error {
   border-left-color: var(--err);
+  background: var(--err-wash);
 }
 .w-error svg,
 .w-error code {
@@ -856,7 +975,7 @@ button {
   margin: 0;
   padding: 0 12px 12px;
   font: 11px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: #a9bcd8;
+  color: var(--muted);
   white-space: pre;
 }
 
@@ -875,7 +994,7 @@ button {
 
 .statusbar b {
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 
@@ -884,18 +1003,15 @@ button {
 }
 
 .statusbar .flag {
-  padding: 1px 7px;
+  padding: 1px 8px;
   border-radius: 999px;
   background: var(--surface-3);
 }
 
 .statusbar .flag.is-on {
-  background: #142440;
+  background: var(--accent-wash);
   color: var(--accent);
-}
-
-.statusbar .muted {
-  color: var(--dim);
+  font-weight: 600;
 }
 
 /* ============================== drop overlay =============================== */
@@ -906,8 +1022,8 @@ button {
   z-index: 50;
   display: grid;
   place-items: center;
-  background: rgba(8, 11, 17, 0.82);
-  backdrop-filter: blur(2px);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(3px);
   pointer-events: none;
 }
 
@@ -919,12 +1035,14 @@ button {
   padding: 40px 64px;
   border: 2px dashed var(--accent);
   border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
   color: var(--accent);
 }
 
 .drop-overlay strong {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 /* =============================== responsive ================================ */
