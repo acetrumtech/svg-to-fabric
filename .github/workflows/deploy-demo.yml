@@ -1,0 +1,58 @@
+name: Deploy demo
+
+on:
+  push:
+    branches: [main]
+  # So the site can be re-published without an empty commit.
+  workflow_dispatch:
+
+# Enough to publish, and nothing else.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; the newer one wins, but the running one finishes
+# rather than being cancelled halfway through an upload.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # The demo imports the library from source, so a library that does not
+      # compile is a demo that must not ship.
+      - run: npm run typecheck
+      - run: npm test
+
+      - run: npm run demo:build
+        env:
+          # Must match the repository name — a project site lives at
+          # https://<owner>.github.io/<repo>/
+          DEMO_BASE: /svg-to-fabric/
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: demo/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

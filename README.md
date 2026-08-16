@@ -87,6 +87,12 @@ JSON side by side, with every option switchable live and the result reconverted
 as you change them. The demo aliases the package to `src/`, so it hot-reloads on
 library edits.
 
+Every push to `main` publishes it to GitHub Pages via
+`.github/workflows/deploy-demo.yml`, which typechecks and tests the library
+first — a library that does not compile is a demo that must not ship. The
+workflow builds with `DEMO_BASE=/svg-to-fabric/`, because a project site is
+served from `/<repo>/` rather than the domain root; local builds default to `/`.
+
 ---
 
 ## Getting started

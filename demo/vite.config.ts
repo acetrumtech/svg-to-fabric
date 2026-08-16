@@ -6,6 +6,14 @@ const repo = fileURLToPath(new URL('..', import.meta.url));
 
 export default defineConfig({
   root,
+  /*
+   * GitHub Pages serves a project site from `/<repo>/`, not from the domain
+   * root, so a build made for it has to know its own prefix or every asset URL
+   * comes back 404. It is an env var rather than a constant because local dev
+   * and `npm run demo:build` are served from `/` — hard-coding the repo name
+   * would break the one thing that gets run most.
+   */
+  base: process.env.DEMO_BASE ?? '/',
   // JSX without @vitejs/plugin-react: esbuild handles .tsx on its own, and the
   // plugin currently requires Vite 8 while the library builds on Vite 7.
   esbuild: { jsx: 'automatic' },
