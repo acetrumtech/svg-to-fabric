@@ -188,48 +188,6 @@ button {
   color: var(--dim);
 }
 
-/* ================================ samples ================================== */
-
-.samples {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.sample {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  text-align: left;
-  padding: 8px 10px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: var(--surface-2);
-  cursor: pointer;
-  transition: border-color 0.14s, background 0.14s;
-}
-
-.sample:hover {
-  background: var(--surface-3);
-  border-color: var(--line);
-}
-
-.sample.is-active {
-  border-color: var(--accent);
-  background: #142440;
-}
-
-.sample strong {
-  font-size: 12.5px;
-  font-weight: 550;
-}
-
-.sample span {
-  color: var(--dim);
-  font-size: 11px;
-  line-height: 1.35;
-}
-
 /* ================================ options ================================== */
 
 .options {
@@ -486,6 +444,11 @@ button {
 
 .empty-state span {
   font-size: 12px;
+}
+
+.empty-state .btn {
+  margin-top: 6px;
+  pointer-events: auto;
 }
 
 .spinner {

@@ -82,17 +82,10 @@ result.warnings;                     // what could not be represented, and why
 npm install && npm run demo
 ```
 
-Drop an SVG — or click one of the built-in samples — and you get the canvas, the
-layer tree, the warnings and the Fabric JSON side by side, with the options
-switchable live. The demo aliases the package to `src/`, so it hot-reloads on
+Drop an SVG and you get the canvas, the layer tree, the warnings and the Fabric
+JSON side by side, with every option switchable live and the result reconverted
+as you change them. The demo aliases the package to `src/`, so it hot-reloads on
 library edits.
-
-The samples are chosen to show something specific: a Figma export whose names
-live in `data-name`, an Illustrator export whose names live in `id`, an Inkscape
-export using `inkscape:label`, an icon with no width/height to try `scale` on,
-and a hostile file carrying a script, an inline handler, a `javascript:` link, a
-tracking pixel and a `<foreignObject>` — all of which come back stripped, with
-the artwork intact.
 
 ---
 

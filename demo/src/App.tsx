@@ -12,7 +12,6 @@ import {
 } from '@acetrumtech/svg-to-fabric';
 import { LayerTree } from './LayerTree.js';
 import { Icon } from './icons.js';
-import { SAMPLES } from './samples.js';
 
 interface DemoOptions {
   preserveGroups: boolean;
@@ -176,6 +175,9 @@ export function App() {
         setHiddenIds(new Set());
         setCollapsedIds(new Set());
         setSelectedId(null);
+        // A filter from the previous file would otherwise greet the new one
+        // with "no layer matches", which reads as a broken conversion.
+        setFilter('');
         setTab('layers');
 
         const next = fitZoom(converted.document);
@@ -411,23 +413,6 @@ export function App() {
         {/* ------------------------------ left rail ----------------------------- */}
         <aside className="rail">
           <section className="block">
-            <h2>Samples</h2>
-            <div className="samples">
-              {SAMPLES.map((sample) => (
-                <button
-                  key={sample.label}
-                  className={`sample${source?.name === `${sample.label}.svg` ? ' is-active' : ''}`}
-                  title={sample.note}
-                  onClick={() => void convert(sample.svg, `${sample.label}.svg`, options)}
-                >
-                  <strong>{sample.label}</strong>
-                  <span>{sample.note}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className="block">
             <h2>Options</h2>
             <div className="options">
               {OPTION_COPY.map(({ key, label, hint }) => (
@@ -508,7 +493,10 @@ export function App() {
               <div className="empty-state">
                 <Icon name="upload" size={26} />
                 <strong>Drop an SVG anywhere</strong>
-                <span>or pick a sample on the left</span>
+                <span>and get named, editable Fabric.js layers</span>
+                <button className="btn" onClick={() => filePicker.current?.click()}>
+                  Choose a file
+                </button>
               </div>
             )}
             {busy && <div className="empty-state"><span className="spinner" />Converting…</div>}
