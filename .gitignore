@@ -1,5 +1,8 @@
 node_modules
 dist
+demo/dist
 *.tgz
 .DS_Store
-demo/dist
+
+# Local editor/tooling config, not part of the package.
+.claude
