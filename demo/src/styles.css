@@ -1,0 +1,378 @@
+:root {
+  --bg: #0b0f17;
+  --panel: #121826;
+  --panel-2: #182131;
+  --line: #263145;
+  --text: #e6ecf6;
+  --muted: #8da2c0;
+  --accent: #60a5fa;
+  --warn: #fbbf24;
+  --err: #f87171;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.app {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+
+header h1 span {
+  color: var(--accent);
+  margin: 0 4px;
+}
+
+header p {
+  margin: 4px 0 24px;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 320px minmax(0, 1fr) 300px;
+  align-items: start;
+}
+
+.json-panel {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.panel h2 {
+  margin: 0 0 14px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.panel h2 em {
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.panel h3 {
+  margin: 18px 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* --------------------------------- input ---------------------------------- */
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 28px 12px;
+  border: 1.5px dashed var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dropzone:hover,
+.dropzone.is-dragging {
+  border-color: var(--accent);
+  background: #1a2740;
+}
+
+.dropzone input {
+  display: none;
+}
+
+.dropzone span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.sample {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sample:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.options code {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.options .scale {
+  margin-top: 4px;
+}
+
+.options .scale input {
+  flex: 1;
+}
+
+.options .scale span {
+  color: var(--accent);
+  min-width: 26px;
+  text-align: right;
+}
+
+.error {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #3b1418;
+  border: 1px solid #7f2029;
+  color: #fecaca;
+  font-size: 13px;
+}
+
+/* --------------------------------- canvas --------------------------------- */
+
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  padding: 12px;
+  /* Checkerboard, so transparency reads as transparency. */
+  background-color: #0f1420;
+  background-image:
+    linear-gradient(45deg, #1a2233 25%, transparent 25%),
+    linear-gradient(-45deg, #1a2233 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #1a2233 75%),
+    linear-gradient(-45deg, transparent 75%, #1a2233 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+.stage .canvas-container {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.warnings {
+  margin-top: 14px;
+}
+
+.warnings ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 190px;
+  overflow: auto;
+}
+
+.warnings li {
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: var(--panel-2);
+  border-left: 3px solid var(--line);
+  color: var(--muted);
+}
+
+.warnings li code {
+  color: var(--text);
+  margin-right: 6px;
+}
+
+.warnings .w-warning {
+  border-left-color: var(--warn);
+}
+
+.warnings .w-error {
+  border-left-color: var(--err);
+}
+
+/* --------------------------------- layers --------------------------------- */
+
+.layers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.layers .layers {
+  border-left: 1px solid var(--line);
+  margin-left: 7px;
+}
+
+.layer {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 6px;
+}
+
+.layer:hover {
+  background: var(--panel-2);
+}
+
+.layer.is-selected {
+  background: #1e3a63;
+}
+
+.layer.is-hidden .name,
+.layer.is-hidden .glyph {
+  opacity: 0.4;
+}
+
+.eye {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 4px 2px 4px 6px;
+  line-height: 1;
+}
+
+.eye:hover {
+  color: var(--accent);
+}
+
+.layer-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 5px 8px 5px 2px;
+  font: inherit;
+  min-width: 0;
+}
+
+.layer-name .glyph {
+  color: var(--muted);
+  width: 12px;
+  flex: none;
+  font-size: 12px;
+}
+
+.layer-name .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.layer-name .tag {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  flex: none;
+}
+
+/* ---------------------------------- json ---------------------------------- */
+
+.json-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.json-actions button {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.json-actions button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.json {
+  margin: 0;
+  max-height: 400px;
+  overflow: auto;
+  background: #0a0e16;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #b6c6de;
+  white-space: pre;
+}
